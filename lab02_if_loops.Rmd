@@ -1,0 +1,199 @@
+---
+title: ""
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lab 02 - Loops and If-Else
+
+## Loops
+
+Many R functions operate on every element of a vector. For
+example, to simulate from a log-normal distribution, you
+can exponentiate draws from a normal. In the following code,
+calling the function `exp` on `z` exponentiates each element of
+`z`.
+
+```{r}
+z <- rnorm(10)
+y <- exp(z)
+y
+```
+
+These calculations can be replicated by writing a for loop over
+the entries of `z`.
+
+```{r}
+print(z)
+for( a in z ){
+    print(c(a,exp(a)))
+}
+```
+`for` is a function that takes its argument in a special syntax.
+The object `z` is a vector (atomic or list), and `a` is a symbol
+representing an element of the vector `z`. These two symbols are
+separated by `in`, and then the parentheses are closed. Then we
+open curly braces, include code involving `a`, and then close
+the curly braces.
+
+When the code is run, `a` is set to the first element of `z`, then
+the code inside the curly braces is run, then `a` is set to the second
+element of `z`, the code inside curly braces is run, then
+`a` is set to the third element of `z`, and so on, until we get
+to the last element of `z`.
+
+Most often, programmers would replace `z` with a sequence of integers
+and rewrite the loop as
+
+```{r}
+for( j in 1:length(z) ){
+    print(c(z[j],exp(z[j])))
+    y[j] <- exp(z[j])
+}
+```
+
+Here, we loop over the integers `1:length(z)`. This allows us to do
+useful things like assign to the jth element of `y`.
+
+It's actually better to write the loop as
+
+```{r}
+for( j in seq_along(z) ){
+    print(c(z[j],exp(z[j])))
+    y[j] <- exp(z[j])
+}
+
+# show what seq_along does
+seq_along(z)
+seq_along( numeric(0) )
+```
+
+which does nothing when `length(z)` is zero, instead of the most likely
+unintended behavior of looping over `1:0`.
+
+
+
+# if
+
+Very commonly, you will want your code to behave differently
+based on the values of objects or elements of vectors. This conditional
+behavior is often combined with loops.
+
+Suppose we wanted to simulate from the half-normal distribution.
+The half-normal pdf is simply the normal pdf for positive
+values, and zero for negative. We can simulate from it by
+taking the absolute value of draws from the normal:
+
+```{r}
+y <- rnorm(10)
+print(y)
+
+for( j in seq_along(y) ){
+
+    # take negative of y[j] if y[j] < -
+    if( y[j] < 0 ){
+        y[j] <- -y[j]
+    }
+
+}
+print(y)
+```
+
+`if` is a function takes takes a single logical value
+as its argument. The statement `y[j] < 0` will evaluate
+to `TRUE` or `FALSE` depending on the value of `y[j]`. If the
+argment evaluates to `TRUE`, the code inside curly braces
+is run. If `FALSE`, it's not run. And if the
+statement evaluates to `NA`, an error is thrown
+
+```{r, error=TRUE}
+if(NA){
+    print("This won't get printed")
+}
+```
+
+If the argument is a vector whose length is longer than 1, a
+warning is issued
+
+```{r}
+if( c(TRUE,FALSE) ){
+    print("this works, but you better get your act together")
+}
+```
+
+`if` will also do coercion of numeric to logical, and in both `for` and `if`,
+you can omit braces if the code is only one line
+
+```{r}
+if(1){ print("this gets printed") }
+if(2.7){ print("this gets printed") }
+if(0){ print("this does not get printed") }
+if(0.2){ print("this gets printed") }
+if(1) print("this works too")
+for(j in 1:10) print(j)
+```
+
+SIDENOTES: Absolute value can be done with the `abs` function. It can
+also be done with subsetting:
+
+```{r}
+y <- rnorm(10)
+print(y)
+y[ y < 0 ] <- -y[ y < 0 ]
+print(y)
+```
+
+# if-else
+
+It's also common that you want the code to do something else
+if the argument to the if statement evalutes to `FALSE`. Here
+is a silly example
+
+```{r}
+speed_limit <- 65
+speeds <- 65 + 5*rnorm(10)
+
+for( j in seq_along(speeds) ){
+    if( speeds[j] > speed_limit ){
+        print( c(round(speeds[j]),"you're going too fast!") )
+    } else {
+        print( c(round(speeds[j]),"OK!") )
+    }
+}
+```
+
+This code checks whether than speed is greater than the limit. If it is
+it lets the driver know; otherwise, it signals OK.
+
+Ifs and elses can be strung together to evaluate a series of expressions.
+Here is an implementation of the soft-threshold operator, thresholding
+at -1 and 1:
+
+```{r}
+z <- rnorm(10)
+y <- rep(NA, length(z))
+
+for( j in seq_along(y) ){
+
+    if( z[j] > 1 ){
+        y[j] <- z[j] - 1
+    } else if( z[j] < -1 ){
+        y[j] <- z[j] + 1
+    } else {
+        y[j] <- 0
+    }
+
+}
+print(cbind(z,y))
+```
+
+## Exercises
+
+Use a for loop and if-else statements to implement the [trapezoidal
+rule](https://en.wikipedia.org/wiki/Trapezoidal_rule) in order to approximately
+integrate the function $x^2$ from 0 to 1 and the function $\sin(x)$
+from 0 to $\pi$. Compare your answer to the actual value of the integral
+for several choices of the number of integration ponts.
